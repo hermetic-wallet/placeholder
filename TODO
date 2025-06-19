@@ -1,7 +1,5 @@
 - add github workflow for release of binaries
 
-- add example for `qemu-system-x86_64 -serial mon:stdio -kernel /bzImage -initrd /initramfs.cpio -m 128 -append "console=ttyS0"`
-
 when updating grub:
 - `sudo update-grub`
 
