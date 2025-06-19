@@ -5,7 +5,7 @@ exec tail -n +3 $0
 # the 'exec tail' line above.
 
 menuentry "custom1" {
-	#linux /boot/vmlinuz ro  quiet splash $vt_handoff
+	#linux /boot/vmlinuz ro quiet $vt_handoff
 	linux /boot/vmlinuz
 	initrd /boot/initramfs
 }
