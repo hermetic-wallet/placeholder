@@ -14,3 +14,5 @@ when updating grub:
 ```
 
 - note: bash-static has up-arrow history, dash doesn't
+
+- add instructions for 3rd party, coreutils-9.7 & dash-0.5.12, with musl `CC="musl-gcc -static" ./configure && make -j32` which depend on `apt install musl-dev musl-tools`
