@@ -1,0 +1,12 @@
+.config - Linux/x86 5.19.0-rc4 Kernel Configuration
+
+```
+commit 03c765b0e3b4cb5063276b086c76f7a612856a9a (grafted, HEAD -> master, tag: v5.19-rc4, origin/master, origin/HEAD)
+Author: Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Sun Jun 26 14:22:10 2022 -0700
+
+    Linux 5.19-rc4
+```
+
+- modify with `make menuconfig` or directly with file if you know what you're doing
+

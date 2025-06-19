@@ -1,0 +1,15 @@
+- add example for `find . | cpio -H newc -o | gzip -9 > initramfs.cpio.gz`, gzip is not necessary though
+- add example for `qemu-system-x86_64 -serial mon:stdio -kernel /bzImage -initrd /initramfs.cpio -m 128 -append "console=ttyS0"`
+
+when updating grub:
+- `sudo update-grub`
+
+- add example for statically linked GO bin 
+```
+ $ env CGO_ENABLED=0 go build -o init main.go
+```
+- add example for statically linked RUST bin
+```
+ $ export RUSTFLAGS='-C target-feature=+crt-static'
+ $ cargo build -r
+```
