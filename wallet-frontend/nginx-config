@@ -1,0 +1,22 @@
+# cat /etc/nginx/sites-available/default
+server {
+    listen 8443 ssl;
+    server_name x.y.z;
+
+    ssl_certificate /etc/letsencrypt/live/x.y.z/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/x.y.z/privkey.pem;
+
+    location / {
+        allow 31.170.0.0/16;
+        deny all;
+
+	proxy_redirect off;
+        proxy_pass https://rpc.payload.de;
+	proxy_set_header Host rpc.payload.de;
+    }
+}
+
+
+--
+
+./mitmdump -p 8443 --mode reverse:https://rpc.payload.de --set block_global=false
