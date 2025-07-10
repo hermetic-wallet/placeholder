@@ -1,6 +1,5 @@
-use std::env;
 
-use vigenere::{decode, encode, print_table};
+use vigenere::decode;
 
 /*
 fn main() {
@@ -36,7 +35,7 @@ fn main() {
         std::io::stdin().read_line(&mut buffer).unwrap();
         let mut split = buffer.split(":");
         let a = split.next().unwrap_or_default();
-        let b = split.next().unwrap_or_default().trim_right();
+        let b = split.next().unwrap_or_default().trim_end();
         //println!("|{}||{}|", a, b);
         //println!("{}", encode(a, b));
         println!("{}", decode(a, b));
