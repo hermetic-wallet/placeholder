@@ -1,0 +1,67 @@
+name: Build binaries
+
+on:
+  push:
+    branches:
+      - build
+#  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        language: [c, rust, go]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up build environment
+        run: |
+          if [ "${{ matrix.language }}" = "c" ]; then
+            echo "Installing build-essential or equivalent"
+            if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+              sudo apt-get update && sudo apt-get install -y build-essential musl-tools
+            #elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            #  xcode-select --install || true
+            #elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            #  choco install mingw -y
+            fi
+          elif [ "${{ matrix.language }}" = "rust" ]; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            source $HOME/.cargo/env
+          elif [ "${{ matrix.language }}" = "go" ]; then
+            # Setup Go (latest version)
+            if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+              sudo snap install --classic go
+            #elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            #  brew install go
+            #elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            #  choco install golang -y
+            fi
+          fi
+
+      - name: Build ${{ matrix.language }} binary
+        shell: bash
+        run: |
+          mkdir release
+          if [ "${{ matrix.language }}" = "c" ]; then
+            echo GCC
+            musl-gcc -static -o release/poweroff minimal-poweroff/shutdown_syscall.c
+          elif [ "${{ matrix.language }}" = "rust" ]; then
+            echo RUST
+            source $HOME/.cargo/env
+            cargo version && rustc --version
+            cd wallet-frontend && cargo build -r && cp target/release/hermetic-wallet-frontend ../release/
+            cd ../vigenere && RUSTFLAGS='-C target-feature=+crt-static' cargo build -r && cp target/release/vigenere ../release/
+          elif [ "${{ matrix.language }}" = "go" ]; then
+            echo GOLANG
+            cd eth-tools && CGO_ENABLED=0 go build -o ../release/wallet-frontend main.go
+          fi
+
+      - name: List built binaries
+        run: |
+          ls -l release
+          find release -type f | xargs -I@ md5sum @
+          ldd release/* || echo

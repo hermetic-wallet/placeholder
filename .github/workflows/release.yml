@@ -1,0 +1,104 @@
+name: Multi-language Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+
+jobs:
+  create_release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+  build_and_upload:
+    needs: create_release
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.artifact_name }}
+    strategy:
+      matrix:
+        include:
+          # Rust build on Ubuntu
+          - os: ubuntu-latest
+            language: rust
+            build_cmd: |
+                    cd wallet-frontend
+                    cargo build --release
+                    sha256sum target/release/hermetic-wallet-frontend
+                    ldd target/release/hermetic-wallet-frontend || true
+            artifact_path: wallet-frontend/target/release/hermetic-wallet-frontend
+            artifact_name: wallet-frontend
+          # Go build on Ubuntu
+          - os: ubuntu-latest
+            language: go
+            build_cmd: |
+                    cd eth-tools
+                    CGO_ENABLED=0 go build -o eth-tools main.go
+                    sha256sum eth-tools
+                    ldd eth-tools || true
+            artifact_path: eth-tools/eth-tools
+            artifact_name: eth-tools
+          # Rust static build on Ubuntu
+          - os: ubuntu-latest
+            language: rust
+            build_cmd: |
+                    cd vigenere
+                    RUSTFLAGS='-C target-feature=+crt-static' cargo build --release
+                    sha256sum target/release/vigenere
+                    ldd target/release/vigenere || true
+            artifact_path: vigenere/target/release/vigenere
+            artifact_name: vigenere
+          # C static build on Ubuntu
+          - os: ubuntu-latest
+            language: c
+            build_cmd: |
+                    cd minimal-poweroff
+                    musl-gcc -static -o poweroff shutdown_syscall.c
+                    sha256sum poweroff
+                    ldd poweroff || true
+            artifact_path: minimal-poweroff/poweroff
+            artifact_name: poweroff
+          # initramfs.cpio.gz build on Ubuntu
+          - os: ubuntu-latest
+            language: bash
+            build_cmd: |
+                    ./make-initramfs.sh
+                    sha256sum initramfs.cpio.gz
+            artifact_path: initramfs.cpio.gz
+            artifact_name: initramfs.cpio.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up environment for ${{ matrix.language }}
+        if: matrix.language == 'c'
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential musl-tools
+
+      - name: Build ${{ matrix.language }} binary
+        run: |
+          ${{ matrix.build_cmd }}
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p release
+          cp ${{ matrix.artifact_path }} release/${{ matrix.artifact_name }}
+
+      - name: Upload asset to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/${{ matrix.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
