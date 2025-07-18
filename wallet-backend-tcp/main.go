@@ -78,7 +78,7 @@ SETNET:
 }
 
 func main() {
-	//setInterfaceIP()
+	setInterfaceIP()
 
 	var cmd string
 	scanner := bufio.NewScanner(os.Stdin)

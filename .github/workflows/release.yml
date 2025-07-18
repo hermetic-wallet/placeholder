@@ -50,6 +50,16 @@ jobs:
                     ldd eth-tools || true
             artifact_path: eth-tools/eth-tools
             artifact_name: eth-tools
+          # Go build on Ubuntu
+          - os: ubuntu-latest
+            language: go
+            build_cmd: |
+                    cd wallet-backend-tcp
+                    CGO_ENABLED=0 go build -o backend-tcp main.go
+                    sha256sum backend-tcp
+                    ldd backend-tcp || true
+            artifact_path: wallet-backend-tcp/backend-tcp
+            artifact_name: wallet-backend
           # Rust static build on Ubuntu
           - os: ubuntu-latest
             language: rust
