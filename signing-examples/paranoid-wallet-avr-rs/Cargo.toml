@@ -1,0 +1,78 @@
+[package]
+name = "arduino-lib"
+version = "0.1.0"
+edition = "2021"
+
+#[[bin]]
+#name = "rust-arduino-blink"
+#test = false
+#bench = false
+
+[dependencies]
+panic-halt = "0.2.0"
+ufmt = "0.1.0"
+#nb = "0.1.2"
+
+#k256 = { version = "0.12.0", default-features = false }
+#secp256k1 = { version = "0.26.0", default-features = false, features = ["alloc", "lowmemory"] }
+#secp256k1 = { version = "0.26.0", default-features = false, features = ["lowmemory"] }
+#libsecp256k1 = { version = "0.7.1", default-features = false, features = [] }
+#ibig = { version = "0.3.6", default-features = false } # needs alloc
+#fixed-bigint = { version = "0.1.9", default-features = false }
+#num-bigint = { version = "0.4.3", default-features = false } # doesn't compiles, needs std
+#bnum = { version = "0.5.0", default-features = false } # doesn't compile, needs alloc
+#u2N = "0.1.0"
+#dashu-int = { version = "0.3.1", default-features = false } # needs alloc
+#awint_core = { version = "0.7.0", default-features = false }
+#awint = { version = "0.7.0", default-features = false }
+#ark-secp256k1 = { version = "0.4.0", default-features = false } # doesn't compile, needs std I guess.
+#noble-secp256k1 = { path = "/home/da/in-dev/tiny-secp256k1", default-features = false, features = ["8-bit","jacobian"] }
+
+noble-secp256k1 = { path = "/home/da/in-dev/tiny-secp256k1-aw", default-features = false, features = ["8-bit"] }
+
+#noble-secp256k1 = { path = "/home/da/in-dev/tiny-secp256k1", default-features = false, features = ["8-bit"] }
+#noble-secp256k1 = { path = "/home/da/in-dev/tiny-secp256k1", default-features = false, features = ["32-bit"] }
+
+#hmac = { version = "0.12.1", default-features = false }
+#sha2 = { version = "0.10", default-features = false }
+#lhash = { version = "1.0.1", default-features = false, features = ["sha256"] }
+
+hmac-sha256 = { version = "1.1.6", default-features = false, features = ["opt_size"] }
+
+#[dependencies.arduino-uno]
+#git = "https://github.com/Rahix/avr-hal"
+#rev = "536c5d"
+
+[dependencies.arduino-hal]
+git = "https://github.com/rahix/avr-hal"
+rev = "4c9c44c314eb061ee20556ef10d45dea36e75ee4"
+features = ["arduino-uno"]
+
+[dependencies.avr-device]
+version = "0.5.0"
+
+[profile.dev]
+panic = "abort"
+debug = true
+lto = true
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+debug = true
+lto = true
+#opt-level = "s" # actually ends up being smaller, even though it shouldn't (works)
+opt-level = "z" # size (better msgs)
+#opt-level = 2
+#strip = true
+
+[profile.dev.package.compiler_builtins]
+overflow-checks = false
+
+#[patch.crates-io.secp256k1]
+#[dependencies.secp256k1]
+#git = "https://github.com/stepansnigirev/rust-secp256k1"
+#default-features = false
+#features = ["alloc", "lowmemory"]
+#path = "/home/da/Documents/github.com/rust-bitcoin/rust-secp256k1"

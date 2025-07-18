@@ -1,0 +1,54 @@
+# jacobian vs. simple (pub-key)
+# debug mode
+pub-of-x = { x: 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa, y: 40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482 }
+Time elapsed is: 4.050011343s
+pub-of-x = { x: 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa, y: 40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482 }
+Time elapsed is: 341.767991905s
+# release mode
+pub-of-x = { x: 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa, y: 40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482 }
+Time elapsed is: 139.431992ms
+pub-of-x = { x: 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa, y: 40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482 }
+Time elapsed is: 8.595738867s
+
+###
+
+# jacobian sig
+# release
+     sig = { x: 71f498f5d9a05e83599a65e31febd4fb07451127031cf069c05c55ce586f248b, y: 247be206cff797fe03223673560c431cf2f94a02ebbb09fda8e4a7b03c2f353 }
+Time elapsed is: 245.356434ms
+# debug
+     sig = { x: 71f498f5d9a05e83599a65e31febd4fb07451127031cf069c05c55ce586f248b, y: 247be206cff797fe03223673560c431cf2f94a02ebbb09fda8e4a7b03c2f353 }
+Time elapsed is: 8.241904663s
+
+
+###
+
+# bench 32-bit
+#running 4 tests
+#test tests::test_public_key ... ignored
+#test tests::test_sig ... ignored
+#test tests::bench_bignum_multiply_simple ... bench: 1,026,889,934 ns/iter (+/- 1,765,391)
+#test tests::bench_public_key             ... bench:  14,509,201 ns/iter (+/- 50,766)
+
+
+
+
+uint vs awint
+
+curve.G = { x: 79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798, y: 483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8 }
+pub-of-01..00 = { x: 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa, y: 40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482 }
+pub-of-01..00 = 8c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa40a30463a3305193378fedf31f7cc0eb7ae784f0451cb9459e71dc73cbef9482
+time elapsed = 8.498663207s <---
+
+curve.G = {
+	x: 0x79be667e_f9dcbbac_55a06295_ce870b07_029bfcdb_2dce28d9_59f2815b_16f81798_u512,
+	y: 0x483ada77_26a3c465_5da4fbfc_0e1108a8_fd17b448_a6855419_9c47d08f_fb10d4b8_u512
+ }
+privat_key = 0x1000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_u512
+public_key = {
+	x: 0x8c28a97b_f8298bc0_d23d8c74_9452a32e_694b65e3_0a9472a3_954ab30f_e5324caa_u512,
+	y: 0x40a30463_a3305193_378fedf3_1f7cc0eb_7ae784f0_451cb945_9e71dc73_cbef9482_u512
+ }
+time elapsed = 20.239642ms <---
+
+

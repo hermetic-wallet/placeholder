@@ -1,0 +1,434 @@
+#![no_std]
+#![no_main]
+//#![cfg_attr(not(test), no_std)]
+//#![cfg_attr(not(test), no_main)]
+//#![feature(alloc_error_handler)]
+
+use panic_halt as _;
+
+//extern crate alloc;
+//pub mod allocator;
+
+use arduino_hal::prelude::*;
+
+use ufmt::uWrite;
+
+use core::fmt::Debug;
+
+extern "C" {
+    // bool ethers_sign(const uint8_t *privateKey, const uint8_t *digest, uint8_t *result)
+    fn ethers_sign(private_key: *const u8, digest: *const u8, result: *mut u8) -> bool;
+
+    // bool ethers_privateKeyToAddress(const uint8_t *privateKey, uint8_t *address)
+    fn ethers_privateKeyToAddress(private_key: *const u8, address: *const u8) -> bool;
+
+    // uint8_t increase_by_one(uint8_t *nums)
+    fn increase_by_one(nums: *mut u8) -> u8;
+}
+/*
+*/
+
+fn print_hex_arr<S>(tag: &str, serial: &mut S, arr: &[u8])
+where
+    S: uWrite,
+    <S as uWrite>::Error: Debug,
+{
+    ufmt::uwrite!(serial, "{} = ", tag).unwrap();
+    for e in arr {
+        if *e < 16 {
+            ufmt::uwrite!(serial, "0{:x}", *e).unwrap();
+        } else {
+            ufmt::uwrite!(serial, "{:x}", *e).unwrap();
+        }
+    }
+    ufmt::uwrite!(serial, "\r\n").unwrap();
+}
+
+#[arduino_hal::entry]
+fn main() -> ! {
+    let dp = arduino_hal::Peripherals::take().unwrap();
+    let pins = arduino_hal::pins!(dp);
+    let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
+
+    ufmt::uwriteln!(&mut serial, "Hello from Arduino!\r").void_unwrap();
+
+    // private-key  = 9d542624d9ef903daa81bfc3ba224ac15f3b55cd2bc5b09779b258d9fa753296
+    // hash-of-tx   = 52fbb559a867af2f7613fd01b0a59e1363d3403830551c22f65622ccf93e7db3
+    // expected-sig = be8fc6f81a181ef6202f628e0380b044978411696bca5fb8b85c5279493a587e29fbb50fd78aeccfd3192410760ac4359f7c022d0b80164e5f82ce3a786bc8f801
+    // actual-sig   = 8ae0db6235b695946338561a6c9a3a3230e5f56ae59dc260751335f5448f46e18e2726a373f17b1fc288509f6dde8f9711583853dfdf62fd727513c3da000000000000000000000000000000000000000000000000000000000000000000
+    //              = 138, 224, 13, 182, 35, 91, 105, 89, 70, 3, 56, 86, 26, 108, 154, 58, 50, 48, 229, 245, 106, 229, 157, 194, 96, 117, 19, 53, 245, 4, 72, 244, 110, 24, 14, 39, 38, 163, 115, 241, 123, 31, 194, 136, 80, 159, 109, 222, 143, 151, 17, 88, 56, 83, 223, 223, 98, 253, 7, 39, 81, 60, 61, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    // expecting address = 0xfd94748666E47A0a1E6baE17eC72429390C66348
+    // getting address   = 0xfd94748666e47a0a1e6bae17ec72429390c66348
+    let calcd_pub_address: &mut [u8; 20] =
+        &mut [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    let private_key: &[u8; 32] = &[
+        0x1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+    ];
+
+    unsafe {
+        let tag = if ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        ) {
+            "✓ pub_addr"
+        } else {
+            "☓ pub_addr"
+        };
+
+        print_hex_arr(tag, &mut serial, calcd_pub_address);
+    }
+
+    /*
+    // ===
+
+    let private_key: &[u8; 32] = &[
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0x1,
+    ];
+
+    unsafe {
+        let tag = if ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        ) {
+            "✓ pub_addr"
+        } else {
+            "☓ pub_addr"
+        };
+
+        print_hex_arr(tag, &mut serial, calcd_pub_address);
+    }
+
+    // ===
+
+    let private_key: &[u8; 32] = &[
+        0x9d, 0x54, 0x26, 0x24, 0xd9, 0xef, 0x90, 0x3d, 0xaa, 0x81, 0xbf, 0xc3, 0xba, 0x22, 0x4a,
+        0xc1, 0x5f, 0x3b, 0x55, 0xcd, 0x2b, 0xc5, 0xb0, 0x97, 0x79, 0xb2, 0x58, 0xd9, 0xfa, 0x75,
+        0x32, 0x96,
+    ];
+
+    unsafe {
+        let tag = if ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        ) {
+            "✓ pub_addr"
+        } else {
+            "☓ pub_addr"
+        };
+
+        print_hex_arr(tag, &mut serial, calcd_pub_address);
+    }
+    */
+
+    /*
+
+    let private_key: &[u8; 32] = &[
+        0xfa, 0x75, 0x32, 0x96, // 8
+        0x79, 0xb2, 0x58, 0xd9, // 7
+        0x2b, 0xc5, 0xb0, 0x97, // 6
+        0x5f, 0x3b, 0x55, 0xcd, // 5
+        0xba, 0x22, 0x4a, 0xc1, // 4
+        0xaa, 0x81, 0xbf, 0xc3, // 3
+        0xd9, 0xef, 0x90, 0x3d, // 2
+        0x9d, 0x54, 0x26, 0x24, // 1
+    ];
+
+    unsafe {
+        ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        );
+
+        print_hex_arr("pub_addr", &mut serial, calcd_pub_address);
+    }
+
+    let private_key: &[u8; 32] = &[
+        0x24, 0x26, 0x54, 0x9d, // 1
+        0x3d, 0x90, 0xef, 0xd9, // 2
+        0xc3, 0xbf, 0x81, 0xaa, // 3
+        0xc1, 0x4a, 0x22, 0xba, // 4
+        0xcd, 0x55, 0x3b, 0x5f, // 5
+        0x97, 0xb0, 0xc5, 0x2b, // 6
+        0xd9, 0x58, 0xb2, 0x79, // 7
+        0x96, 0x32, 0x75, 0xfa, // 8
+    ];
+
+    unsafe {
+        ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        );
+
+        print_hex_arr("pub_addr", &mut serial, calcd_pub_address);
+    }
+
+    let private_key: &[u8; 32] = &[
+        0x96, 0x32, 0x75, 0xfa, // 8
+        0xd9, 0x58, 0xb2, 0x79, // 7
+        0x97, 0xb0, 0xc5, 0x2b, // 6
+        0xcd, 0x55, 0x3b, 0x5f, // 5
+        0xc1, 0x4a, 0x22, 0xba, // 4
+        0xc3, 0xbf, 0x81, 0xaa, // 3
+        0x3d, 0x90, 0xef, 0xd9, // 2
+        0x24, 0x26, 0x54, 0x9d, // 1
+    ];
+
+    unsafe {
+        ethers_privateKeyToAddress(
+            private_key as *const [u8] as *const u8,
+            calcd_pub_address as *const [u8] as *const u8,
+        );
+
+        print_hex_arr("pub_addr", &mut serial, calcd_pub_address);
+    }
+
+    // 0....1
+
+    let private_key: &mut [u8; 32] = &mut [
+        0x00, 0x00, 0x00, 0x00, // 1
+        0x00, 0x00, 0x00, 0x00, // 2
+        0x00, 0x00, 0x00, 0x00, // 3
+        0x00, 0x00, 0x00, 0x00, // 4
+        0x00, 0x00, 0x00, 0x00, // 5
+        0x00, 0x00, 0x00, 0x00, // 6
+        0x00, 0x00, 0x00, 0x00, // 7
+        0x00, 0x00, 0x00, 0x00, // 8
+    ];
+
+    unsafe {
+        for i in 0..32 {
+            private_key[i] = 1;
+
+            ethers_privateKeyToAddress(
+                private_key as *const [u8] as *const u8,
+                calcd_pub_address as *const [u8] as *const u8,
+            );
+
+            print_hex_arr("pub_addr_1", &mut serial, calcd_pub_address);
+
+            //
+
+            private_key[i] = 8;
+
+            ethers_privateKeyToAddress(
+                private_key as *const [u8] as *const u8,
+                calcd_pub_address as *const [u8] as *const u8,
+            );
+
+            print_hex_arr("pub_addr_8", &mut serial, calcd_pub_address);
+
+            //
+
+            private_key[i] = 16;
+
+            ethers_privateKeyToAddress(
+                private_key as *const [u8] as *const u8,
+                calcd_pub_address as *const [u8] as *const u8,
+            );
+
+            print_hex_arr("pub_addr_16", &mut serial, calcd_pub_address);
+
+            //
+
+            private_key[i] = 128;
+
+            ethers_privateKeyToAddress(
+                private_key as *const [u8] as *const u8,
+                calcd_pub_address as *const [u8] as *const u8,
+            );
+
+            print_hex_arr("pub_addr_128", &mut serial, calcd_pub_address);
+
+            //
+
+            private_key[i] = 0;
+        }
+    }
+    */
+
+    let digest: &[u8] = &[
+        0x52, 0xfb, 0xb5, 0x59, 0xa8, 0x67, 0xaf, 0x2f, 0x76, 0x13, 0xfd, 0x1, 0xb0, 0xa5, 0x9e,
+        0x13, 0x63, 0xd3, 0x40, 0x38, 0x30, 0x55, 0x1c, 0x22, 0xf6, 0x56, 0x22, 0xcc, 0xf9, 0x3e,
+        0x7d, 0xb3,
+    ];
+
+    let result: &mut [u8; 65] = &mut [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+    ];
+
+    ufmt::uwriteln!(&mut serial, "private-key = {:?}\r", private_key).void_unwrap();
+
+    unsafe {
+        ethers_sign(
+            private_key as *const [u8] as *const u8,
+            digest as *const [u8] as *const u8,
+            result as *mut [u8] as *mut u8,
+        );
+    }
+
+    print_hex_arr("signature", &mut serial, result);
+
+    loop {
+        // Read a byte from the serial connection
+        let b = nb::block!(serial.read()).void_unwrap();
+
+        // Answer
+        ufmt::uwriteln!(&mut serial, "Got {}!\r", b).void_unwrap();
+    }
+
+    /*
+    let dp = arduino_hal::Peripherals::take().unwrap();
+    let pins = arduino_hal::pins!(dp);
+    let mut led = pins.d13.into_output();
+    */
+
+    /*
+    let _size = secp256k1::Secp256k1::preallocate_size();
+    let _secp = secp256k1::Secp256k1::new();
+     */
+
+    /*
+    loop {
+        led.toggle();
+        arduino_hal::delay_ms(1000);
+    }
+    */
+}
+
+/*
+mod rfc6979 {
+    /// Alias for a byte array whose size is defined by [`ArrayEncoding::ByteSize`].
+    #[cfg_attr(docsrs, doc(cfg(feature = "generic-array")))]
+    pub type ByteArray<T> = GenericArray<u8, <T as ArrayEncoding>::ByteSize>;
+
+    pub struct GenericArray<T, U: ArrayLength<T>> {
+        data: U::ArrayType,
+    }
+
+    pub trait ArrayEncoding: Encoding {
+        /// Size of a byte array which encodes a big integer.
+        type ByteSize: ArrayLength<u8> + Add + Eq + Ord + Unsigned;
+
+        /// Deserialize from a big-endian byte array.
+        fn from_be_byte_array(bytes: ByteArray<Self>) -> Self;
+
+        /// Deserialize from a little-endian byte array.
+        fn from_le_byte_array(bytes: ByteArray<Self>) -> Self;
+
+        /// Serialize to a big-endian byte array.
+        fn to_be_byte_array(&self) -> ByteArray<Self>;
+
+        /// Serialize to a little-endian byte array.
+        fn to_le_byte_array(&self) -> ByteArray<Self>;
+    }
+
+    /// Simplified HMAC instance able to operate over hash functions
+    /// which do not expose block-level API and hash functions which
+    /// process blocks lazily (e.g. BLAKE2).
+    #[derive(Clone)]
+    pub struct SimpleHmac<D: Digest + BlockSizeUser> {
+        digest: D,
+        opad_key: Block<D>,
+        #[cfg(feature = "reset")]
+        ipad_key: Block<D>,
+    }
+
+    /// Deterministically generate ephemeral scalar `k`.
+    ///
+    /// Accepts the following parameters and inputs:
+    ///
+    /// - `x`: secret key
+    /// - `n`: field modulus
+    /// - `h`: hash/digest of input message: must be reduced modulo `n` in advance
+    /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
+    #[inline]
+    pub fn generate_k<D, I>(x: &I, n: &I, h: &ByteArray<I>, data: &[u8]) -> Zeroizing<I>
+    where
+        D: Digest + BlockSizeUser + FixedOutput<OutputSize = I::ByteSize> + FixedOutputReset,
+        I: ArrayEncoding + Integer + Zeroize,
+    {
+        let mut x = x.to_be_byte_array();
+        let mut hmac_drbg = HmacDrbg::<D>::new(&x, h, data);
+        x.zeroize();
+
+        loop {
+            let mut bytes = ByteArray::<I>::default();
+            hmac_drbg.fill_bytes(&mut bytes);
+            let k = I::from_be_byte_array(bytes);
+
+            if (!k.is_zero() & k.ct_lt(n)).into() {
+                return k;
+            }
+        }
+    }
+
+    /// Internal implementation of `HMAC_DRBG` as described in NIST SP800-90A.
+    ///
+    /// <https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final>
+    ///
+    /// This is a HMAC-based deterministic random bit generator used compute a
+    /// deterministic ephemeral scalar `k`.
+    pub struct HmacDrbg<D>
+    where
+        D: Digest + BlockSizeUser + FixedOutputReset,
+    {
+        /// HMAC key `K` (see RFC 6979 Section 3.2.c)
+        k: SimpleHmac<D>,
+
+        /// Chaining value `V` (see RFC 6979 Section 3.2.c)
+        v: GenericArray<u8, D::OutputSize>,
+    }
+
+    impl<D> HmacDrbg<D>
+    where
+        D: Digest + BlockSizeUser + FixedOutputReset,
+    {
+        /// Initialize `HMAC_DRBG`
+        pub fn new(entropy_input: &[u8], nonce: &[u8], additional_data: &[u8]) -> Self {
+            let mut k = SimpleHmac::new(&Default::default());
+            let mut v = GenericArray::default();
+
+            for b in &mut v {
+                *b = 0x01;
+            }
+
+            for i in 0..=1 {
+                k.update(&v);
+                k.update(&[i]);
+                k.update(entropy_input);
+                k.update(nonce);
+                k.update(additional_data);
+                k = SimpleHmac::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
+
+                // Steps 3.2.e,g: v = HMAC_k(v)
+                k.update(&v);
+                v = k.finalize_reset().into_bytes();
+            }
+
+            Self { k, v }
+        }
+
+        /// Write the next `HMAC_DRBG` output to the given byte slice.
+        pub fn fill_bytes(&mut self, out: &mut [u8]) {
+            for out_chunk in out.chunks_mut(self.v.len()) {
+                self.k.update(&self.v);
+                self.v = self.k.finalize_reset().into_bytes();
+                out_chunk.copy_from_slice(&self.v[..out_chunk.len()]);
+            }
+
+            self.k.update(&self.v);
+            self.k.update(&[0x00]);
+            self.k = SimpleHmac::new_from_slice(&self.k.finalize_reset().into_bytes())
+                .expect("HMAC error");
+            self.k.update(&self.v);
+            self.v = self.k.finalize_reset().into_bytes();
+        }
+    }
+}
+*/

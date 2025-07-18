@@ -1,0 +1,10 @@
+curve.G = {
+	x: 0x79be667e_f9dcbbac_55a06295_ce870b07_029bfcdb_2dce28d9_59f2815b_16f81798_u257,
+	y: 0x483ada77_26a3c465_5da4fbfc_0e1108a8_fd17b448_a6855419_9c47d08f_fb10d4b8_u257
+ }
+privat_key = 0x2_u257
+public_key = {
+	x: 0xc6047f94_41ed7d6d_3045406e_95c07cd8_5c778e4b_8cef3ca7_abac09b9_5c709ee5_u257,
+	y: 0x1ae168fe_a63dc339_a3c58419_466ceaee_f7f63265_3266d0e1_236431a9_50cfe52a_u257
+ }
+time elapsed = 11.685762ms

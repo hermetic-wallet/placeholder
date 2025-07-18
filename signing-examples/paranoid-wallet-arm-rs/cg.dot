@@ -1,0 +1,91 @@
+digraph {
+    node [fontname=monospace shape=box]
+    0 [label="Reset\nmax = 2792\nlocal = 8"]
+    1 [label="main\nmax = 2784\nlocal = 8"]
+    2 [label="test_m3::__cortex_m_rt_main\nmax = 2776\nlocal = 1264"]
+    3 [label="awint_core::data::bits::Bits::get_double_digit\nmax = 16\nlocal = 16"]
+    4 [label="awint_core::logic::div::<impl awint_core::data::bits::Bits>::udivide\nmax = 256\nlocal = 152"]
+    5 [label="awint_core::logic::div::<impl awint_core::data::bits::Bits>::two_possibility_algorithm\nmax = 104\nlocal = 48"]
+    6 [label="awint_internals::dd_division\nmax = 72\nlocal = 16"]
+    7 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::inc_assign\nmax = 8\nlocal = 8"]
+    8 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::sub_assign\nmax = 36\nlocal = 36"]
+    9 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::add_assign\nmax = 32\nlocal = 32"]
+    10 [label="core::panicking::panic_fmt\nmax = 8\nlocal = 8"]
+    11 [label="core::panicking::panic\nmax = 16\nlocal = 8"]
+    12 [label="core::result::unwrap_failed\nmax = 16\nlocal = 8"]
+    13 [label="DefaultHandler_\nmax = 0\nlocal = 0"]
+    14 [label="DefaultPreInit\nmax = 0\nlocal = 0"]
+    15 [label="noble_secp256k1::point::Point::double_assign_mod\nmax = 1512\nlocal = 1256"]
+    16 [label="rust_begin_unwind\nmax = 0\nlocal = 0"]
+    17 [label="__c_m_sh_syscall\nmax = 0\nlocal = 0"]
+    18 [label="__cpsid\nmax = 0\nlocal = 0"]
+    19 [label="__cpsie\nmax = 0\nlocal = 0"]
+    20 [label="__primask_r\nmax = 0\nlocal = 0"]
+    21 [label="compiler_builtins::int::specialized_div_rem::u64_div_rem\nmax = 24\nlocal = 24"]
+    22 [label="__udivmoddi4\nmax = 32\nlocal = 8"]
+    23 [label="compiler_builtins::mem::memcpy\nmax = 32\nlocal = 32"]
+    24 [label="compiler_builtins::mem::memset\nmax = 8\nlocal = 8"]
+    25 [label="__aeabi_uldivmod\nmax = 56\nlocal = 24"]
+    26 [label="compiler_builtins::arm::__aeabi_memcpy\nmax = 32\nlocal = 0"]
+    27 [label="compiler_builtins::arm::__aeabi_memcpy4\nmax = 32\nlocal = 0"]
+    28 [label="__aeabi_memcpy4\nmax = 32\nlocal = 0"]
+    29 [label="compiler_builtins::arm::__aeabi_memset\nmax = 8\nlocal = 0"]
+    30 [label="compiler_builtins::arm::__aeabi_memset4\nmax = 8\nlocal = 0"]
+    31 [label="compiler_builtins::arm::__aeabi_memclr\nmax = 8\nlocal = 0"]
+    32 [label="__aeabi_memclr\nmax = 8\nlocal = 0"]
+    33 [label="compiler_builtins::arm::__aeabi_memclr4\nmax = 8\nlocal = 0"]
+    34 [label="__aeabi_memclr4\nmax = 8\nlocal = 0"]
+    35 [label="HardFaultTrampoline\nmax = 0\nlocal = 0"]
+    36 [label="HardFault_\nmax = 0\nlocal = 0"]
+    4 -> 10
+    4 -> 11
+    4 -> 5
+    4 -> 3
+    4 -> 6
+    4 -> 7
+    4 -> 8
+    4 -> 9
+    26 -> 23
+    1 -> 2
+    15 -> 11
+    15 -> 4
+    31 -> 29
+    27 -> 26
+    11 -> 10
+    33 -> 30
+    22 -> 21
+    5 -> 10
+    5 -> 11
+    28 -> 27
+    29 -> 24
+    34 -> 33
+    10 -> 16
+    30 -> 29
+    32 -> 31
+    12 -> 10
+    2 -> 20
+    2 -> 18
+    2 -> 17
+    2 -> 19
+    2 -> 15
+    2 -> 11
+    2 -> 4
+    2 -> 12
+    0 -> 14
+    0 -> 1
+    6 -> 11
+    0 -> 28
+    2 -> 32
+    2 -> 34
+    2 -> 28
+    4 -> 34
+    4 -> 25
+    5 -> 25
+    5 -> 34
+    6 -> 25
+    15 -> 28
+    15 -> 34
+    15 -> 32
+    25 -> 22
+    35 -> 36
+}

@@ -1,0 +1,18 @@
+#rustflags = ["--cfg=rust_secp_no_symbol_renaming"]
+#rustflags = ["rust_secp_no_symbol_renaming"]
+rustflags = ["-Z emit-stack-sizes"]
+
+[target.avr-atmega328p]
+runner = "qemu-system-avr -M uno -nographic -serial tcp::5678,server=on -bios"
+
+[build]
+target = "avr-atmega328p.json"
+#target = "avr-atmega1284.json"
+#target = "avr-atmega2560.json"
+
+[unstable]
+build-std = ["core"]
+build-std-features = ["compiler-builtins-mangled-names"]
+#build-std = ["core", "alloc"]
+#build-std = ["core", "compiler_builtins", "alloc"]
+#build-std = ["core", "compiler_builtins"]

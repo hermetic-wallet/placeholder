@@ -1,0 +1,52 @@
+//! Prints "Hello, world!" on the host console using semihosting
+
+#![no_main]
+#![no_std]
+
+use panic_halt as _;
+
+use cortex_m_rt::entry;
+use cortex_m_semihosting::{debug, hprint, hprintln};
+
+use noble_secp256k1::{BigNum, Curve};
+
+fn print_hex_str_arr(tag: &str, arr: &[u8]) {
+    hprint!("{} = ", tag).unwrap();
+    for x in arr {
+        hprint!("{}", *x as char).unwrap();
+    }
+    hprintln!("").unwrap();
+}
+
+#[entry]
+fn main() -> ! {
+    hprintln!("Hello, world!").unwrap();
+
+    /*
+    let mut private_key = BigNum::from_le_bytes(&[
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
+    ]);
+    */
+    let mut private_key = BigNum::from_le_bytes(&[
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+    ]);
+
+    let mut curve = Curve::secp256k1();
+
+    let mut buf: [u8; 128] = [0; 128];
+    private_key.to_hex_str(&mut buf).unwrap();
+    print_hex_str_arr("private-key", &buf);
+
+    let public_key = curve.multiply_simple(&mut private_key);
+    public_key.as_hex(&mut buf);
+    print_hex_str_arr("public-key", &buf);
+
+    // exit QEMU
+    // NOTE do not run this on hardware; it can corrupt OpenOCD state
+    debug::exit(debug::EXIT_SUCCESS);
+
+    loop {}
+}

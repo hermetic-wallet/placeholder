@@ -1,0 +1,417 @@
+fn main() {
+    /*
+    let left = [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32,
+    ];
+
+    let src = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
+    ];
+
+    let right = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 255,
+    ];
+
+    let left = bigint::Num::from_bytes(&left);
+    let right = bigint::Num::from_bytes(&right);
+
+    print!("left  = ");
+    left.hex_print();
+
+    print!("right = ");
+    right.hex_print();
+
+    let result = left.mult(right);
+    //let result = right.mult(left);
+    print!("result = ");
+    result.hex_print();
+    */
+
+    let P = bigint::Num::from_bytes(&[
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff,
+        0xfc, 0x2f,
+    ]);
+
+    let n = bigint::Num::from_bytes(&[
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xfe, 0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b, 0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36,
+        0x41, 0x41,
+    ]);
+
+    // G x, y values taken from official secp256k1 document
+    //CURVE.Gx = 55066263022277343669578718895168534326250603453777594175500187360389116729240n;
+    //CURVE.Gy = 32670510020758816978083085130507043184471273380659243275938904335757337482424n;
+
+    let Gx = bigint::Num::from_bytes(&[
+        0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b,
+        0x07, 0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8,
+        0x17, 0x98,
+    ]);
+
+    let Gy = bigint::Num::from_bytes(&[
+        0x48, 0x3a, 0xda, 0x77, 0x26, 0xa3, 0xc4, 0x65, 0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08,
+        0xa8, 0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19, 0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10,
+        0xd4, 0xb8,
+    ]);
+
+    println!("== point doubling test ==");
+
+    let point = Point { x: Gx, y: Gy };
+
+    print!("point.x = ");
+    point.x.hex_print();
+    let point = point.double(n);
+    print!("point.x = ");
+    point.x.hex_print();
+
+    // ===
+
+    use fixed_bigint::num_traits::Num;
+    use fixed_bigint::FixedUInt as Bn;
+
+    let Gx = Bn::<u8, 64>::from_str_radix(
+        "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        16,
+    )
+    .unwrap();
+
+    let double_Gx: Bn<u8, 64> = Gx * Gx;
+
+    println!("Gx = {:?}", Gx);
+    println!("double_Gx = {:?}", double_Gx);
+
+    let mut buf = [0u8; 128];
+    println!(" Gx = {:?}", Gx.to_hex_str(&mut buf));
+    println!("dGx = {:?}", double_Gx.to_hex_str(&mut buf));
+}
+
+#[derive(Debug)]
+struct Point {
+    x: bigint::Num,
+    y: bigint::Num,
+}
+
+use crate::bigint::DNum;
+use crate::bigint::Num;
+
+impl Point {
+    pub fn double(self, n: Num) -> Point {
+        /*
+            const X1 = this.x;
+            const Y1 = this.y;
+            const lam = mod(3n * X1 ** 2n * invert(2n * Y1, CURVE.P));
+            const X3 = mod(lam * lam - 2n * X1);
+            const Y3 = mod(lam * (X1 - X3) - Y1);
+            return new Point(X3, Y3);
+        */
+
+        let X1 = self.x;
+        let Y1 = self.y;
+
+        let three = bigint::Num::from_bytes(&[
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 3,
+        ]);
+
+        let X1 = X1.mult(X1.clone());
+        print!("X1 after mul = ");
+        X1.hex_print();
+        //let X1 = X1.mult(three);
+        //let X1 = X1.mod_reduce(&n).to_num();
+        //let (X1, _) = X1.sub(&DNum::from_num(n));
+        let X1 = X1.to_num();
+        //let lam = three.mult(X1);
+
+        Point { x: X1, y: Y1 }
+    }
+}
+
+mod bigint {
+    type WORD = u8;
+    type DWORD = u16;
+
+    const WORD_COUNT: usize = 32;
+    const MAX_WORDS: usize = 32;
+    const WORD_SIZE: usize = 1; // how many bytes is each word
+    const WORD_BITS: usize = 8;
+    // WORD_BITS_SHIFT 3
+    // WORD_BITS_MASK 0x07
+
+    const BYTES_COUNT: usize = 32;
+
+    #[derive(Debug, Clone)]
+    pub struct Num([WORD; WORD_COUNT]);
+
+    #[derive(Debug)]
+    pub struct DNum([WORD; WORD_COUNT * 2]);
+
+    impl DNum {
+        pub fn hex_print(&self) {
+            print!("0x");
+            for n in self.0.iter().rev() {
+                print!("{:02x}", n);
+            }
+            println!("");
+        }
+
+        pub fn to_num(&self) -> Num {
+            let mut result: Num = Num([0; WORD_COUNT]);
+            for i in 0..WORD_COUNT {
+                result.0[i] = self.0[i];
+            }
+
+            result
+        }
+
+        pub fn from_num(num: Num) -> Self {
+            let mut result: DNum = DNum([0; WORD_COUNT * 2]);
+            for i in 0..WORD_COUNT {
+                result.0[i] = num.0[i];
+            }
+
+            result
+        }
+
+        /*
+        pub fn mod_of(&self, num: Num) -> Num {
+            let mod_multiple = [0; 2 * MAX_WORDS];
+            let tmp = [0; 2 * MAX_WORDS];
+            let v = [tmp, self.0];
+
+            let index: WORD = 0;
+
+            let shift: DWORD = (WORD_COUNT * 2 * WORD_BITS) - uECC_vli_numBits(num, WORD_COUNT);
+
+            num
+            //
+        }
+        */
+
+        pub fn cmp_unsafe(&self, other: &DNum) -> i8 {
+            for i in (0..WORD_COUNT * 2).rev() {
+                if self.0[i] > other.0[i] {
+                    return 1;
+                } else if self.0[i] < other.0[i] {
+                    return -1;
+                }
+            }
+
+            0
+        }
+
+        pub fn sub_in_place(&mut self, right: &DNum) -> WORD {
+            let mut left = self;
+            let mut borrow: WORD = 0;
+
+            println!("subbing...");
+            left.hex_print();
+            right.hex_print();
+
+            // using WORD_COUNT * 1 would lead to bug, cause last digit won't get minused,
+            // instead sub which adds to a new result and misses extra digit (cause loop won't
+            // even go over it) suceeds! hidden bugs!
+            for i in 0..WORD_COUNT * 2 {
+                println!("{:02x} - {:02x} - {:02x}", left.0[i], right.0[i], borrow);
+                let diff: WORD = if left.0[i] as DWORD >= (right.0[i] as DWORD + borrow as DWORD) {
+                    left.0[i] - right.0[i] - borrow
+                } else {
+                    (0x100 + left.0[i] as DWORD - right.0[i] as DWORD - borrow as DWORD) as WORD
+                };
+
+                if diff != left.0[i] {
+                    borrow = if diff > left.0[i] { 1 } else { 0 };
+                }
+
+                left.0[i] = diff;
+            }
+
+            borrow
+        }
+
+        pub fn sub(&self, right: &DNum) -> (Self, WORD) {
+            let mut left = self;
+            let mut borrow: WORD = 0;
+            let mut result: DNum = DNum([0; WORD_COUNT * 2]);
+
+            println!("subbing...");
+            self.hex_print();
+            right.hex_print();
+
+            for i in 0..WORD_COUNT {
+                println!("{:02x} - {:02x} - {:02x}", left.0[i], right.0[i], borrow);
+                let diff: WORD = if left.0[i] as DWORD >= (right.0[i] as DWORD + borrow as DWORD) {
+                    left.0[i] - right.0[i] - borrow
+                } else {
+                    (0x100 + left.0[i] as DWORD - right.0[i] as DWORD - borrow as DWORD) as WORD
+                };
+
+                if diff != left.0[i] {
+                    borrow = if diff > left.0[i] { 1 } else { 0 };
+                }
+
+                result.0[i] = diff;
+            }
+
+            (result, borrow)
+        }
+
+        pub fn mod_reduce(mut self, _other: &Num) -> DNum {
+            let mut other: DNum = DNum([0; WORD_COUNT * 2]);
+            for i in 0..WORD_COUNT {
+                other.0[i] = _other.0[i];
+            }
+
+            while self.cmp_unsafe(&other) >= 0 {
+                println!("comp lower! before");
+                self.hex_print();
+                self.sub_in_place(&other);
+                println!("comp lower! after");
+                self.hex_print();
+            }
+            println!("compared...");
+            self.hex_print();
+            other.hex_print();
+
+            self
+        }
+    }
+
+    impl Num {
+        pub fn hex_print(&self) {
+            print!("0x");
+            for n in self.0.iter().rev() {
+                print!("{:02x}", n);
+            }
+            println!("");
+        }
+
+        // e.g. uECC_vli_bytesToNative (Num = Native)
+        pub fn from_bytes(source: &[u8]) -> Num {
+            let mut target: [WORD; WORD_COUNT] = [0; WORD_COUNT];
+
+            for i in 0..BYTES_COUNT {
+                let b = BYTES_COUNT - 1 - i;
+
+                target[b / WORD_SIZE] |= source[i] << (8 * (b % WORD_SIZE));
+            }
+
+            Num(target)
+        }
+
+        //pub fn plus(&self, other: Num) -> Num {
+        //    other
+        //
+        //}
+
+        pub fn muladd(a: WORD, b: WORD, r0: &mut WORD, r1: &mut WORD, r2: &mut WORD) {
+            //let p: DWORD = (a * b).into(); // (bug) LEAVE IT HERE -- good for blog (overflows)
+            let p: DWORD = a as DWORD * b as DWORD;
+            print!("  muladd:: p = 0x{:04x}", p);
+
+            let mut r01: DWORD = ((*r1 as DWORD) << WORD_BITS) | (*r0 as DWORD);
+            print!(" r0 = 0x{:02x} r1 = 0x{:02x}  r01 = 0x{:04x}", r0, r1, r01);
+
+            // bug: in c, it simply wraps on overflow
+            //r01 += p;
+            r01 = (p as u32 + r01 as u32) as DWORD;
+            print!(" new_r01 = 0x{:04x}", r01);
+            println!("");
+            *r2 += if r01 < p { 1 } else { 0 };
+            //print!(" new_r2 = 0x{:02x}", r2);
+            *r1 = (r01 >> WORD_BITS) as WORD;
+            //print!(" new_r1 = 0x{:02x}", r1);
+            *r0 = r01 as WORD;
+            //print!(" new_r0 = 0x{:02x}", r0);
+
+            //print!("\n");
+        }
+
+        pub fn mult(&self, other: Num) -> DNum {
+            let mut result: DNum = DNum([0; 32 * 2]);
+
+            let mut r0: WORD = 0;
+            let mut r1: WORD = 0;
+            let mut r2: WORD = 0;
+
+            for k in 0..WORD_COUNT {
+                for i in 0..(k + 1) {
+                    Self::muladd(self.0[i], other.0[k - i], &mut r0, &mut r1, &mut r2);
+                    /*
+                     */
+                    println!(
+                        "[i = {:2}, k = {:2}]\t left_{:1} x right_{:1} (0x{:02x}*0x{:02x})\t[r0 = 0x{:02x}, r1 = 0x{:02x}, r2 = 0x{:02x}]",
+                        i,
+                        k,
+                        i,
+                        k-i,
+                        self.0[i],
+                        other.0[k - i],
+                        r0,
+                        r1,
+                        r2
+                    );
+                }
+                result.0[k] = r0;
+                r0 = r1;
+                r1 = r2;
+                r2 = 0;
+            }
+
+            for k in WORD_COUNT..(WORD_COUNT * 2 - 1) {
+                for i in ((k + 1) - WORD_COUNT)..WORD_COUNT {
+                    Self::muladd(self.0[i], other.0[k - i], &mut r0, &mut r1, &mut r2);
+                    /*
+                    println!(
+                        "[i = {:2}, k = {:2}]\t left_{:1} x right_{:1} (0x{:02x}*0x{:02x})\t[r0 = 0x{:02x}, r1 = 0x{:02x}, r2 = 0x{:02x}]",
+                        i,
+                        k,
+                        i,
+                        k-i,
+                        self.0[i],
+                        other.0[k - i],
+                        r0,
+                        r1,
+                        r2
+                    );
+                    */
+                }
+                result.0[k] = r0;
+                r0 = r1;
+                r1 = r2;
+                r2 = 0;
+            }
+
+            result.0[WORD_COUNT * 2 - 1] = r0;
+
+            result
+        }
+    }
+}
+
+/*
+
+multiply logic (for blog)
+
+left  = 0x201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a090807060504030201
+right = 0xff00000000000000000000000000000000000000000000000000000000000000
+
+  muladd:: p = 0x1fe0 r0 = 0x00 r1 = 0x00  r01 = 0x0000 new_r01 = 0x1fe0 new_r2 = 0x00 new_r1 = 0x1f new_r0 = 0xe0
+[i =  0, k =  0]	 left_0 x right_0 (0x20*0xff)	[r0 = 0xe0, r1 = 0x1f, r2 = 0x00] // <-- this line calls muladd, thus log data is AFTER muladd executed
+
+  muladd:: p = 0x0000 r0 = 0x1f r1 = 0x00  r01 = 0x001f new_r01 = 0x001f new_r2 = 0x00 new_r1 = 0x00 new_r0 = 0x1f
+[i =  0, k =  1]	 left_0 x right_1 (0x20*0x00)	[r0 = 0x1f, r1 = 0x00, r2 = 0x00]
+
+  muladd:: p = 0x1ee1 r0 = 0x1f r1 = 0x00  r01 = 0x001f new_r01 = 0x1f00 new_r2 = 0x00 new_r1 = 0x1f new_r0 = 0x00
+[i =  1, k =  1]	 left_1 x right_0 (0x1f*0xff)	[r0 = 0x00, r1 = 0x1f, r2 = 0x00]
+
+  muladd:: p = 0x0000 r0 = 0x1f r1 = 0x00  r01 = 0x001f new_r01 = 0x001f new_r2 = 0x00 new_r1 = 0x00 new_r0 = 0x1f
+[i =  1, k =  2]	 left_1 x right_1 (0x1f*0x00)	[r0 = 0x1f, r1 = 0x00, r2 = 0x00]
+
+result = 0xe0001f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+
+*/

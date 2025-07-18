@@ -1,0 +1,147 @@
+digraph {
+    node [fontname=monospace shape=box]
+    0 [label="Reset\nmax = 2048\nlocal = 8"]
+    1 [label="main\nmax = 2040\nlocal = 8"]
+    2 [label="test_m3::__cortex_m_rt_main\nmax = 2032\nlocal = 1176"]
+    3 [label="awint_core::data::bits::Bits::get_digit\nmax = 16\nlocal = 16"]
+    4 [label="awint_core::data::bits::Bits::assert_cleared_unused_bits\nmax = 24\nlocal = 16"]
+    5 [label="awint_core::data::bits::Bits::get_double_digit\nmax = 16\nlocal = 16"]
+    6 [label="awint_core::logic::misc::<impl awint_core::data::bits::Bits>::lz\nmax = 40\nlocal = 16"]
+    7 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::inc_assign\nmax = 8\nlocal = 8"]
+    8 [label="awint_core::logic::mul::<impl awint_core::data::bits::Bits>::short_cin_mul\nmax = 32\nlocal = 32"]
+    9 [label="awint_core::logic::div::<impl awint_core::data::bits::Bits>::short_udivide_assign\nmax = 80\nlocal = 24"]
+    10 [label="awint_core::logic::div::<impl awint_core::data::bits::Bits>::udivide\nmax = 200\nlocal = 104"]
+    11 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::sub_assign\nmax = 24\nlocal = 24"]
+    12 [label="awint_core::logic::div::<impl awint_core::data::bits::Bits>::two_possibility_algorithm\nmax = 96\nlocal = 40"]
+    13 [label="awint_internals::dd_division\nmax = 72\nlocal = 16"]
+    14 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::add_assign\nmax = 24\nlocal = 24"]
+    15 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::rsb_assign\nmax = 24\nlocal = 24"]
+    16 [label="awint_core::logic::mul::<impl awint_core::data::bits::Bits>::mul_assign\nmax = 72\nlocal = 56"]
+    17 [label="awint_core::logic::permute::<impl awint_core::data::bits::Bits>::ashr_assign\nmax = 72\nlocal = 40"]
+    18 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::dec_assign\nmax = 0\nlocal = 0"]
+    19 [label="awint_core::logic::sum::<impl awint_core::data::bits::Bits>::neg_assign\nmax = 8\nlocal = 0"]
+    20 [label="core::panicking::panic_fmt\nmax = 8\nlocal = 8"]
+    21 [label="core::panicking::panic\nmax = 16\nlocal = 8"]
+    22 [label="core::result::unwrap_failed\nmax = 16\nlocal = 8"]
+    23 [label="DefaultHandler_\nmax = 0\nlocal = 0"]
+    24 [label="DefaultPreInit\nmax = 0\nlocal = 0"]
+    25 [label="noble_secp256k1::point::Point::double_assign_mod\nmax = 856\nlocal = 656"]
+    26 [label="rust_begin_unwind\nmax = 0\nlocal = 0"]
+    27 [label="__c_m_sh_syscall\nmax = 0\nlocal = 0"]
+    28 [label="__cpsid\nmax = 0\nlocal = 0"]
+    29 [label="__cpsie\nmax = 0\nlocal = 0"]
+    30 [label="__primask_r\nmax = 0\nlocal = 0"]
+    31 [label="<T as core::convert::TryInto<U>>::try_into::h5f0e1f1ccbf0d423\nmax = 0\nlocal = 0"]
+    32 [label="<T as core::convert::TryInto<U>>::try_into::h66ed5937f2f18cdc\nmax = 0\nlocal = 0"]
+    33 [label="compiler_builtins::int::specialized_div_rem::u64_div_rem\nmax = 24\nlocal = 24"]
+    34 [label="__udivmoddi4\nmax = 32\nlocal = 8"]
+    35 [label="compiler_builtins::mem::memcpy\nmax = 32\nlocal = 32"]
+    36 [label="compiler_builtins::mem::memmove\nmax = 32\nlocal = 32"]
+    37 [label="compiler_builtins::mem::memset\nmax = 16\nlocal = 16"]
+    38 [label="__aeabi_uldivmod\nmax = 56\nlocal = 24"]
+    39 [label="compiler_builtins::arm::__aeabi_memcpy\nmax = 32\nlocal = 0"]
+    40 [label="compiler_builtins::arm::__aeabi_memcpy4\nmax = 32\nlocal = 0"]
+    41 [label="__aeabi_memcpy4\nmax = 32\nlocal = 0"]
+    42 [label="compiler_builtins::arm::__aeabi_memmove\nmax = 32\nlocal = 0"]
+    43 [label="compiler_builtins::arm::__aeabi_memmove4\nmax = 32\nlocal = 0"]
+    44 [label="__aeabi_memmove4\nmax = 32\nlocal = 0"]
+    45 [label="compiler_builtins::arm::__aeabi_memset\nmax = 16\nlocal = 0"]
+    46 [label="compiler_builtins::arm::__aeabi_memset4\nmax = 16\nlocal = 0"]
+    47 [label="compiler_builtins::arm::__aeabi_memclr\nmax = 16\nlocal = 0"]
+    48 [label="__aeabi_memclr\nmax = 16\nlocal = 0"]
+    49 [label="compiler_builtins::arm::__aeabi_memclr4\nmax = 16\nlocal = 0"]
+    50 [label="__aeabi_memclr4\nmax = 16\nlocal = 0"]
+    51 [label="HardFaultTrampoline\nmax = 0\nlocal = 0"]
+    52 [label="HardFault_\nmax = 0\nlocal = 0"]
+    42 -> 36
+    2 -> 30
+    2 -> 28
+    2 -> 27
+    2 -> 29
+    2 -> 22
+    2 -> 25
+    2 -> 17
+    2 -> 21
+    2 -> 19
+    2 -> 11
+    2 -> 15
+    2 -> 10
+    2 -> 16
+    2 -> 18
+    50 -> 49
+    43 -> 42
+    8 -> 31
+    40 -> 39
+    46 -> 45
+    21 -> 20
+    6 -> 4
+    34 -> 33
+    16 -> 21
+    16 -> 31
+    1 -> 2
+    3 -> 32
+    0 -> 24
+    0 -> 1
+    48 -> 47
+    25 -> 21
+    25 -> 16
+    25 -> 10
+    25 -> 8
+    25 -> 32
+    25 -> 15
+    25 -> 17
+    25 -> 18
+    25 -> 11
+    25 -> 14
+    49 -> 46
+    12 -> 6
+    12 -> 5
+    12 -> 21
+    12 -> 8
+    12 -> 15
+    12 -> 14
+    20 -> 26
+    10 -> 4
+    10 -> 6
+    10 -> 11
+    10 -> 21
+    10 -> 9
+    10 -> 3
+    10 -> 12
+    10 -> 5
+    10 -> 13
+    10 -> 32
+    10 -> 7
+    10 -> 31
+    10 -> 14
+    41 -> 40
+    5 -> 32
+    45 -> 37
+    13 -> 21
+    4 -> 32
+    4 -> 20
+    22 -> 20
+    19 -> 7
+    44 -> 43
+    17 -> 32
+    39 -> 35
+    47 -> 45
+    0 -> 41
+    2 -> 50
+    2 -> 48
+    2 -> 41
+    9 -> 38
+    10 -> 50
+    10 -> 38
+    12 -> 38
+    12 -> 50
+    13 -> 38
+    16 -> 50
+    17 -> 44
+    25 -> 50
+    25 -> 44
+    25 -> 41
+    25 -> 48
+    38 -> 34
+    51 -> 52
+}
