@@ -1,17 +1,5 @@
-- add github workflow for release of binaries
-
 when updating grub:
 - `sudo update-grub`
-
-- add example for statically linked GO bin 
-```
- $ env CGO_ENABLED=0 go build -o init main.go
-```
-- add example for statically linked RUST bin
-```
- $ export RUSTFLAGS='-C target-feature=+crt-static'
- $ cargo build -r
-```
 
 - note: bash-static has up-arrow history, dash doesn't
 
