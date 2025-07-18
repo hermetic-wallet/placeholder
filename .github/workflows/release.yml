@@ -59,7 +59,7 @@ jobs:
                     sha256sum backend-tcp
                     ldd backend-tcp || true
             artifact_path: wallet-backend-tcp/backend-tcp
-            artifact_name: wallet-backend
+            artifact_name: backend-tcp
           # Rust static build on Ubuntu
           - os: ubuntu-latest
             language: rust
