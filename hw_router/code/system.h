@@ -8,18 +8,17 @@
 
 
 // RasPico Network settings
-#define DEF_SYS_PICO_MAC        (0x123456789abc)
-
+//#define DEF_SYS_PICO_MAC        (0x123456789abc)
+#define DEF_SYS_PICO_MAC        (0x024256789abc)
 
 #define DEF_SYS_PICO_IP1        (172)
 #define DEF_SYS_PICO_IP2        (16)
 #define DEF_SYS_PICO_IP3        (3)
-#define DEF_SYS_PICO_IP4        (2)
+#define DEF_SYS_PICO_IP4        (42)
 
 
 // For UDP
 #define DEF_SYS_UDP_DST_MAC     (0x23456789abcd)
-
 
 
 #define DEF_SYS_UDP_DST_IP1     (172)

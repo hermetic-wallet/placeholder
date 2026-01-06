@@ -64,38 +64,22 @@ void arp_init(void) {
 
 #include "pico/stdlib.h"
 
-uint32_t arp_packet_remake_10base(volatile uint8_t *logger, uint32_t *buf, volatile uint32_t *in_data, uint32_t size) {
+uint32_t arp_packet_remake_10base(uint32_t *buf, volatile uint32_t *in_data, uint32_t size) {
     uint32_t i = 0;
     uint32_t idx = 0;
 
     // Preamble
     for (i = 0; i < 7; i++) {
-    	logger[idx] = 0x55;
         data_8b[idx++] = 0x55;
     }
     // SFD
-    logger[idx] = 0xD5;
     data_8b[idx++] = 0xD5;
     
     // Actual packet
     for (i = 0; i < size; i++) {
-    	/*
-	if (idx + 4 >= DEF_ARP_BUF_SIZE) {
-	    gpio_put(PICO_DEFAULT_LED_PIN, true);
-	    break;
-	}
-	*/
-    
-    	//logger[idx] = (in_data[i] >> 24) & 0xFF;
     	data_8b[idx++] = (uint8_t)((in_data[i] >> 24) & 0xFF);
-
-    	//logger[idx] = (uint8_t)((in_data[i] >> 16) & 0xFF);
     	data_8b[idx++] = (uint8_t)((in_data[i] >> 16) & 0xFF);
-
-    	//logger[idx] = (uint8_t)((in_data[i] >> 8) & 0xFF);
     	data_8b[idx++] = (uint8_t)((in_data[i] >> 8) & 0xFF);
-    	    
-    	//logger[idx] = (uint8_t)in_data[i] & 0xFF;
     	data_8b[idx++] = (uint8_t)(in_data[i] & 0xFF);
     }
 

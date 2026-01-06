@@ -10,14 +10,19 @@
 #include "icmp.h"
 #include "udp.h"
 #include "tucp.h"
+#include "tft.hpp"
 #include "ser_10base_t.pio.h"
 #include "des_10base_t.pio.h"
 
-
+extern void tft_ping_back(void);
 // Define
 
+//#define HW_PINNUM_RXP           (9)            // Ethernet RX+
+//#define HW_PINNUM_RXN           (8)            // Ethernet RX-
 #define HW_PINNUM_RXP           (5)            // Ethernet RX+
 #define HW_PINNUM_RXN           (4)            // Ethernet RX-
+//#define HW_PINNUM_TXP           (7)            // Ethernet TX+
+//#define HW_PINNUM_TXN           (5)            // Ethernet TX-
 #define HW_PINNUM_TXP           (3)            // Ethernet TX+
 #define HW_PINNUM_TXN           (2)            // Ethernet TX-
 
@@ -93,14 +98,13 @@ static uint8_t proxy_buf_arp[80] = {0};
 
 uint32_t ALLOWED_PROXY_PORT = 8881;
 //uint32_t MTU = 1500;
-static uint32_t tx_buf_tucp[1500/8] = {0};
+static uint32_t tx_buf_tucp[512] = {0};
 
 void eth_init(void) {
     udp_init();
     arp_init();
     icmp_init();
     tucp_init();
-
  
     // 10BASE-T Serializer PIO init. Pin numbers must be sequential.
     uint offset = pio_add_program(pio_serdes, &ser_10base_t_program);
@@ -174,7 +178,6 @@ void eth_main(void) {
         _busy_led_update(true);
     } else {
         _send_udp();
-        //rx_func_core0(); // receive packets for RX2
     }
 }
 
@@ -200,8 +203,8 @@ void _rx_packets_proc(void) {
 
     if (eth_type == DEF_ETHTYPE_ARP) {
         if (arp_opcode == DEF_ARPOPC_REQUEST && arp_target_ip == pico_ip_addr) {
-	    // CASE 1.
-	    //   LEFT/RIGHT talking to PICO
+        // CASE 1.
+        //   LEFT/RIGHT talking to PICO
             arp_packet_gen_10base(tx_buf_arp, eth_src, arp_sender_ip);
 
             dma_channel_configure (
@@ -216,30 +219,30 @@ void _rx_packets_proc(void) {
             sleep_us(10);   // IFG
             _clear_nflp_timer_cnt();
         } else {
-	    // CASE 2.
-	    //   PROXY
-	    //   LEFT/RIGHT talking to RIGHT/LEFT
-            uint32_t arp_tx_size = arp_packet_remake_10base(proxy_buf_arp, tx_buf_arp, gsram_arr[chan][slot], size);
+        // CASE 2.
+        //   PROXY
+        //   LEFT/RIGHT talking to RIGHT/LEFT
+            uint32_t arp_tx_size = arp_packet_remake_10base(tx_buf_arp, gsram_arr[chan][slot], size);
 
             // start proxy
             proxy_buf_size = size + 1;
             proxy_target_ip = arp_target_ip;
             // end proxy
 
-	       dma_channel_configure (
-	           dma_ch_10base_t[!chan],        // Channel to be configured
-	           &dma_conf_10base_t[!chan],     // The configuration we just created
-	           &pio_serdes->txf[!chan+2],    // Destination address
-	           tx_buf_arp,             // Source address
-	           (arp_tx_size+1),   // Number of transfers
-	           true                    // Start yet
-	       );
-	       dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
-	       sleep_us(10);   // IFG
-	       _clear_nflp_timer_cnt();     
+           dma_channel_configure (
+               dma_ch_10base_t[!chan],        // Channel to be configured
+               &dma_conf_10base_t[!chan],     // The configuration we just created
+               &pio_serdes->txf[!chan+2],    // Destination address
+               tx_buf_arp,             // Source address
+               (arp_tx_size+1),   // Number of transfers
+               true                    // Start yet
+           );
+           dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
+           sleep_us(10);   // IFG
+           _clear_nflp_timer_cnt();     
        }
     } else if (eth_type == DEF_ETHTYPE_IPV4) {
-        uint16_t ip_len = gsram_arr[chan][slot][4] >> 16;
+        uint32_t ip_len = gsram_arr[chan][slot][4] >> 16;
         uint16_t ip_identification = gsram_arr[chan][slot][4] & 0xFFFF;
         uint8_t ip_ttl = (gsram_arr[chan][slot][5] >> 8) & 0xFF;
         uint8_t ip_protocol = gsram_arr[chan][slot][5] & 0xFF;
@@ -247,67 +250,104 @@ void _rx_packets_proc(void) {
         uint32_t ip_dst_adr = (gsram_arr[chan][slot][7] << 16) + (gsram_arr[chan][slot][8] >> 16);
         
         if ((ip_protocol == DEF_IP_PROTOCOL_UDP) || (ip_protocol == DEF_IP_PROTOCOL_TCP)) {
-        	uint32_t tucp_src_port = (gsram_arr[chan][slot][8] & 0xFFFF);
-        	uint32_t tucp_dst_port = (gsram_arr[chan][slot][9] >> 16);
-        	
-        	if ((chan == 1 && tucp_dst_port == ALLOWED_PROXY_PORT) ||
-        	    (chan == 0 && tucp_src_port == ALLOWED_PROXY_PORT)) {
-        	    // display it
-        	    
-        	    uint32_t tucp_tx_size = tucp_packet_remake_10base(tx_buf_tucp, gsram_arr[chan][slot], size);
-        	    
-                dma_channel_configure (
-	                dma_ch_10base_t[!chan],        // Channel to be configured
-	                &dma_conf_10base_t[!chan],     // The configuration we just created
-	                &pio_serdes->txf[!chan+2],    // Destination address
-	                tx_buf_tucp,             // Source address
-	                (tucp_tx_size+1),   // Number of transfers
-	                true                    // Start yet
-	            );
-	            dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
-	            sleep_us(10);   // IFG
-	            _clear_nflp_timer_cnt();
-        	}
+            uint32_t tucp_src_port = (gsram_arr[chan][slot][8] & 0xFFFF);
+            uint32_t tucp_dst_port = (gsram_arr[chan][slot][9] >> 16);          
+            
+            if ((chan == 1 && tucp_dst_port == ALLOWED_PROXY_PORT) ||
+                (chan == 0 && tucp_src_port == ALLOWED_PROXY_PORT)) {               
+                int32_t rx_delta_with_expected = 0;
+                
+                if (ip_protocol == DEF_IP_PROTOCOL_TCP) {
+                    
+                    //uint8_t flag = (gsram_arr[chan][slot][11] & 0xFF);
+                    //printf("%x", gsram_arr[chan][slot][11]);
+                    // display it when it's PSH
+                    //if (flag & 8) {
+                    uint32_t ip_ihl = (gsram_arr[chan][slot][3] >> 8) & 0xF;
+                    uint32_t data_offset = (gsram_arr[chan][slot][11] & 0xF000) >> 12;
+                    //(IP Total Length) - (IP Header Length × 4) - (TCP Data Offset × 4)
+                    uint32_t real_data_size = ip_len - 4 * ip_ihl - 4 * data_offset;
+                    // PSH is not always set, data size is better
+                    if (real_data_size > 0) {                                          
+                        rx_delta_with_expected = (size * 4) - (14 + 4*ip_ihl + 4*data_offset + real_data_size);
+                                                
+                        if (rx_delta_with_expected < 0) {
+                            // drop the packet, we didn't get the whole thing
+                            return;
+                        }
+                        uint32_t payload_starting_address = (uint8_t*)&gsram_arr[chan][slot][4] - 2 + 4*ip_ihl + 4 * data_offset;
+                        uint32_t seq = (gsram_arr[chan][slot][9] << 16) + (gsram_arr[chan][slot][10] >> 16);
+                        
+                        write_tcp_data(&gsram_arr[chan][slot], payload_starting_address % 4, size, real_data_size, seq, chan);
+                        render_display();
+
+                    }
+                } else {
+                    // UDP
+                    //tft_display_buf((uint8_t *)&gsram_arr[chan][slot][10] + 2, ip_len - 28);
+                }
+                
+                uint32_t tucp_tx_size = tucp_packet_remake_10base(tx_buf_tucp, gsram_arr[chan][slot], size, rx_delta_with_expected);
+                
+                    dma_channel_configure (
+                    dma_ch_10base_t[!chan],        // Channel to be configured
+                    &dma_conf_10base_t[!chan],     // The configuration we just created
+                    &pio_serdes->txf[!chan+2],    // Destination address
+                    tx_buf_tucp,             // Source address
+                    (tucp_tx_size+1),   // Number of transfers
+                    true                    // Start yet
+                );
+                dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
+                sleep_us(10);   // IFG
+                _clear_nflp_timer_cnt();
+            }
         }
         
         // CASE 1.
         //   LEFT/RIGHT talking to PICO
         else if ((ip_protocol == DEF_IP_PROTOCOL_ICMP) && (ip_dst_adr == pico_ip_addr) && (ip_len < 1500)) {
+
+            uint16_t icmp_seq = gsram_arr[chan][slot][10] >> 16;
+            char icmp_seq_str[6] = "";
+            sprintf(icmp_seq_str, "%06u\n", icmp_seq);
+            write_next(icmp_seq_str, 6, icmp_seq % 2);
+            render_display();
+
             // ICMP Echo test
             uint32_t icmp_tx_size = icmp_packet_gen_10base(tx_buf_icmp, gsram_arr[chan][slot]);
 
-		    dma_channel_configure (
-		        dma_ch_10base_t[chan],        // Channel to be configured
-		        &dma_conf_10base_t[chan],     // The configuration we just created
-		        &pio_serdes->txf[chan+2],    // Destination address
-		        tx_buf_icmp,            // Source address
-		        icmp_tx_size + 1,       // Number of transfers. "+ 1" is TP_IDL
-		        true                    // Start yet
-		    );
-		    dma_channel_wait_for_finish_blocking(dma_ch_10base_t[chan]);
-		    sleep_us(10);   // IFG
-		    _clear_nflp_timer_cnt();
+            dma_channel_configure (
+                dma_ch_10base_t[chan],        // Channel to be configured
+                &dma_conf_10base_t[chan],     // The configuration we just created
+                &pio_serdes->txf[chan+2],    // Destination address
+                tx_buf_icmp,            // Source address
+                icmp_tx_size + 1,       // Number of transfers. "+ 1" is TP_IDL
+                true                    // Start yet
+            );
+            dma_channel_wait_for_finish_blocking(dma_ch_10base_t[chan]);
+            sleep_us(10);   // IFG
+            _clear_nflp_timer_cnt();
         }
         
         // CASE 2.
         //   PROXY
-	    // 	 LEFT/RIGHT talking to RIGHT/LEFT
-	    // 	 send same packet over the other TX
+        //   LEFT/RIGHT talking to RIGHT/LEFT
+        //   send same packet over the other TX
         else if ((ip_protocol == DEF_IP_PROTOCOL_ICMP) && (ip_dst_adr != pico_ip_addr) && (ip_len < 1500)) {
             // ICMP Echo test
             uint32_t icmp_tx_size = icmp_packet_remake_10base(tx_buf_icmp, gsram_arr[chan][slot], size);
 
-		    dma_channel_configure (
-		        dma_ch_10base_t[!chan],        // Channel to be configured
-		        &dma_conf_10base_t[!chan],     // The configuration we just created
-		        &pio_serdes->txf[!chan+2],    // Destination address
-		        tx_buf_icmp,            // Source address
-		        icmp_tx_size + 1,       // Number of transfers. "+ 1" is TP_IDL
-		        true                    // Start yet
-		    );
-		    dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
-		    sleep_us(10);   // IFG
-		    _clear_nflp_timer_cnt();
+            dma_channel_configure (
+                dma_ch_10base_t[!chan],        // Channel to be configured
+                &dma_conf_10base_t[!chan],     // The configuration we just created
+                &pio_serdes->txf[!chan+2],    // Destination address
+                tx_buf_icmp,            // Source address
+                icmp_tx_size + 1,       // Number of transfers. "+ 1" is TP_IDL
+                true                    // Start yet
+            );
+            dma_channel_wait_for_finish_blocking(dma_ch_10base_t[!chan]);
+            sleep_us(10);   // IFG
+            _clear_nflp_timer_cnt();
         }
     }
 }
@@ -317,7 +357,7 @@ void _rx_packets_proc(void) {
 // UDP Test
 bool _send_udp(void) {
     uint32_t time_now = time_us_32();
-    uint8_t udp_payload[DEF_UDP_PAYLOAD_SIZE] = {0};
+    char udp_payload[DEF_UDP_PAYLOAD_SIZE] = {0};
     static uint32_t time_udp = 0;
     static uint32_t udp_cnt = 0;
     bool ret = false;
@@ -348,20 +388,20 @@ bool _send_udp(void) {
                 proxy_buf_icmp[proxy_buf_size-0]  
             );
 
-	        uint32_t len = 0;
-	        for (uint32_t i = 0; i < 80; i++) {
-	            len += sprintf(udp_payload + len, "%02X", proxy_buf_arp[i]);
-	        }	
-	        udp_payload[160] = '\n';
-		    
-		    udp_packet_gen_10base(tx_buf_udp, udp_payload);
-		    for (uint32_t i = 0; i < DEF_UDP_BUF_SIZE+1; i++) {
-		        ser_10base_t_tx_10b(pio_serdes, sm_tx1, tx_buf_udp[i]);
-		    }
-		    ret = true;
-		    sleep_us(10);   // IFG
-		    _clear_nflp_timer_cnt();    
-	    }
+            uint32_t len = 0;
+            for (uint32_t i = 0; i < 80; i++) {
+                len += sprintf(udp_payload + len, "%02X", proxy_buf_arp[i]);
+            }   
+            udp_payload[160] = '\n';
+            
+            udp_packet_gen_10base(tx_buf_udp, udp_payload);
+            for (uint32_t i = 0; i < DEF_UDP_BUF_SIZE+1; i++) {
+                ser_10base_t_tx_10b(pio_serdes, sm_tx1, tx_buf_udp[i]);
+            }
+            ret = true;
+            sleep_us(10);   // IFG
+            _clear_nflp_timer_cnt();    
+        }
     }
 
     return ret;

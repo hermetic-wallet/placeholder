@@ -70,7 +70,7 @@ void udp_init(void) {
 }
 
 
-void udp_packet_gen_10base(uint32_t *buf, uint8_t *udp_payload) {
+void udp_packet_gen_10base(uint32_t *buf, char *udp_payload) {
     uint16_t udp_chksum = 0;
     uint32_t i, j, idx = 0, ans;
 

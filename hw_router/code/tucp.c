@@ -52,7 +52,7 @@ void tucp_init(void) {
 }
 
 
-uint32_t tucp_packet_remake_10base(uint32_t *buf, volatile uint32_t *in_data, uint32_t size) {
+uint32_t tucp_packet_remake_10base(uint32_t *buf, volatile uint32_t *in_data, uint32_t size, int32_t delta) {
     uint32_t i = 0;
     uint32_t idx = 0;
 
@@ -71,6 +71,11 @@ uint32_t tucp_packet_remake_10base(uint32_t *buf, volatile uint32_t *in_data, ui
     	data_8b[idx++] = (uint8_t)(in_data[i] & 0xFF);    	
     }
 
+
+    if (delta > 0) {
+        //printf("tucp_packet_remake_10base::delta idx %u -> %u\n", idx, idx - delta);
+        idx -= delta;
+    }
 
 
     //==========================================================================
@@ -103,6 +108,8 @@ uint32_t tucp_packet_remake_10base(uint32_t *buf, volatile uint32_t *in_data, ui
     }
     crc ^= 0xffffffff;
 #endif
+
+
 
     data_8b[idx++] = (crc >>  0) & 0xFF;
     data_8b[idx++] = (crc >>  8) & 0xFF;

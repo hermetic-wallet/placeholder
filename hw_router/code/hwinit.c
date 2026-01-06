@@ -20,9 +20,10 @@ static bool _led_blink_timer_callback(struct repeating_timer *t) {
 
 void hw_init()
 {
-    vreg_set_voltage(VREG_VOLTAGE_1_20);    // Increase core voltage to stabilize overclocking
-    sleep_ms(10);
+    //vreg_set_voltage(VREG_VOLTAGE_1_20);    // Increase core voltage to stabilize overclocking
+    //sleep_ms(100);
     set_sys_clock_khz(240000, true);        // Over clock 240MHz
+    sleep_ms(100);
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
@@ -30,5 +31,5 @@ void hw_init()
 
 void hw_start_led_blink()
 {
-    //add_repeating_timer_ms(-5000, _led_blink_timer_callback, NULL, &timer);
+    //add_repeating_timer_ms(-2500, _led_blink_timer_callback, NULL, &timer);
 }
